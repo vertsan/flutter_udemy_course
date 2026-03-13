@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 final formatter = DateFormat.yMd();
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key});
+  const NewExpense({super.key, required this.onAddExpense});
+
+  final void Function(Expense expense) onAddExpense;
 
   @override
   State<NewExpense> createState() {
@@ -33,8 +35,45 @@ class _NewExpenseState extends State<NewExpense> {
   }
 
   void _submitExpenseData() {
-
+    final enteredAmount = double.tryParse(
+      _amountController.text,
+    ); // tryParse('Hello ') => null, tryParse('123.45') => 123.45
+    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+    if (amountIsInvalid ||
+        _titleController.text.trim().isEmpty ||
+        amountIsInvalid ||
+        _selectedDate == null) {
+      // show error message
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Invalid input'),
+          content: const Text(
+            'Please make sure a valid title, amount, date and category was entered.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: const Text('Ok'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    widget.onAddExpense(
+      Expense(
+        title: _titleController.text,
+        amount: enteredAmount,
+        date: _selectedDate!,
+        category: _selectedCategory,
+      ),
+    );
+    Navigator.pop(context);
   }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -45,7 +84,7 @@ class _NewExpenseState extends State<NewExpense> {
   @override
   Widget build(BuildContext ctx) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 16.0),
       child: Column(
         children: [
           // Title input
@@ -66,7 +105,7 @@ class _NewExpenseState extends State<NewExpense> {
                     decimal: true,
                   ),
                   decoration: const InputDecoration(
-                    prefixText: '\$',
+                    prefixText: '\$ ',
                     label: Text('Amount'),
                   ),
                 ),
